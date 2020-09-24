@@ -1,0 +1,22 @@
+services:
+  Steven\AutoFixturesBundle\Annotations\FixturesAnnotationReader:
+    class: Steven\AutoFixturesBundle\Annotations\FixturesAnnotationReader
+    arguments: ['@annotation_reader']
+
+  steven_auto_fixtures.command.create_fixtures_command:
+    class: Steven\AutoFixturesBundle\Command\CreateFixturesCommand
+    arguments: ['@?', '@steven_auto_fixtures.services.fixture_creator']
+    tags:
+      - { name: console.command }
+
+
+  steven_auto_fixtures.services.fixturables_classes:
+    class: Steven\AutoFixturesBundle\Services\FixturablesClasses
+    arguments: ['@symfony.component.finder.finder', '@parameter_bag']
+
+  symfony.component.finder.finder:
+    class: Symfony\Component\Finder\Finder
+
+  steven_auto_fixtures.services.fixture_creator:
+    class: Steven\AutoFixturesBundle\Services\FixtureCreator
+    arguments: ['@steven_auto_fixtures.services.fixturables_classes', '@Steven\AutoFixturesBundle\Annotations\FixturesAnnotationReader']
