@@ -11,7 +11,7 @@ class FixturesAnnotationReader
     /**
      * @var Reader
      */
-    private $reader;
+    public $reader;
 
     public function __construct(Reader $reader)
     {

@@ -21,8 +21,9 @@ class FixturableFields
         'city',
         'country',
         'surname',
-        'PoBox',
-        'imageUrl'
+        'postcode',
+        'imageUrl',
+        'entity'
     ];
 
     /**

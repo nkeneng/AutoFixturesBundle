@@ -1,45 +1,66 @@
 <?php
 
-
 namespace Steven\AutoFixturesBundle\Services;
 
-
-use Steven\AutoFixturesBundle\Annotations\FixturesAnnotationReader;
+use Faker\Factory;
+use Faker\Generator;
 
 class FixtureCreator
 {
     /**
-     * @var FixturablesClasses
+     * @var Generator
      */
-    private $fixturablesClasses;
-    /**
-     * @var FixturesAnnotationReader
-     */
-    private $reader;
+    private $faker;
 
     /**
-     * @var array
+     * @var Generator
      */
-    public $classes;
+    private $generator;
 
-    public function __construct(FixturablesClasses $fixturablesClasses, FixturesAnnotationReader $reader)
+    public function __construct()
     {
-        $this->fixturablesClasses = $fixturablesClasses;
-        $this->reader = $reader;
+        $this->faker = $faker = Factory::create('en_US');
     }
 
-    public function createEntity(string $class)
+    public function generateTitle(int $number = 5):string
     {
-        return new $class();
+        $sentence = $this->faker->sentence($number);
+        return substr($sentence, 0, strlen($sentence) - 1);
     }
 
-    public function createEntities()
+    public function generateText(int $number):string
     {
-        foreach ($this->fixturablesClasses->getClassNames() as $className) {
-            $entity = $this->createEntity($className);
-            if ($this->reader->isFixturable($entity)) {
-                $this->classes[] = $className;
-            }
-        }
+      return  $this->faker->realText($maxNbChars = $number, $indexSize = 2);
+    }
+
+    public function generateName():string
+    {
+        return $this->faker->name;
+    }
+
+    public function generateCity()
+    {
+        return $this->faker->city;
+    }
+
+    public function generateCountry()
+    {
+        return $this->faker->country;
+    }
+
+    public function generateLastname()
+    {
+        return $this->faker->lastName;
+    }
+
+    public function generatePostcode()
+    {
+        return $this->faker->postcode;
+    }
+
+    public function generateImageUrl()
+    {
+        //@TODO get the width , heigth, category from user
+        return $this->faker->imageUrl(640, 480, 'cats', true, 'Faker');
     }
 }

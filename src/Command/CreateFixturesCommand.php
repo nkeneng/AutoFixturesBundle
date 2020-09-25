@@ -4,8 +4,10 @@
 namespace Steven\AutoFixturesBundle\Command;
 
 
+use Faker\Factory;
+use Faker\ORM\Propel\Populator;
 use Steven\AutoFixturesBundle\Services\FixturablesClasses;
-use Steven\AutoFixturesBundle\Services\FixtureCreator;
+use Steven\AutoFixturesBundle\Services\FixtureManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -19,14 +21,14 @@ class CreateFixturesCommand extends Command
      */
     private $classes;
     /**
-     * @var FixtureCreator
+     * @var FixtureManager
      */
-    private $creator;
+    private $fixtureManager;
 
-    public function __construct(string $name = null,FixtureCreator $creator)
+    public function __construct(string $name = null, FixtureManager $fixtureManager)
     {
         parent::__construct($name);
-        $this->creator = $creator;
+        $this->fixtureManager = $fixtureManager;
     }
 
     /**
@@ -50,8 +52,7 @@ class CreateFixturesCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->creator->createEntities();
-        dump($this->creator->classes);
+        $this->fixtureManager->createEntities();
         $this->io->success('hello world');
         return 0;
     }
