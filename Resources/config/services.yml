@@ -5,7 +5,7 @@ services:
 
   steven_auto_fixtures.command.create_fixtures_command:
     class: Steven\AutoFixturesBundle\Command\CreateFixturesCommand
-    arguments: ['@?', '@steven_auto_fixtures.services.fixture_manager']
+    arguments: ['@?', '@Steven\AutoFixturesBundle\Services\FixtureManager', '@Doctrine\ORM\EntityManagerInterface']
     tags:
       - { name: console.command }
 
@@ -17,15 +17,15 @@ services:
   symfony.component.finder.finder:
     class: Symfony\Component\Finder\Finder
 
-  steven_auto_fixtures.services.fixture_manager:
+  Steven\AutoFixturesBundle\Services\FixtureManager:
     class: Steven\AutoFixturesBundle\Services\FixtureManager
     arguments:
       - '@steven_auto_fixtures.services.fixturables_classes'
       - '@Steven\AutoFixturesBundle\Annotations\FixturesAnnotationReader'
-      - '%fixtures.max_number%'
-      - '%fixtures.min_number%'
-      - '%fixtures.text%'
-      - '%fixtures.title%'
+      - '%fixtures.number_per_entity%'
+      - '%fixtures.number_word_text%'
+      - '%fixtures.number_word_title%'
+      - '%fixtures.language%'
       - '@Doctrine\ORM\EntityManagerInterface'
       - '@steven_auto_fixtures.services.fixture_creator'
 
@@ -34,3 +34,5 @@ services:
 
   steven_auto_fixtures.services.fixture_creator:
     class: Steven\AutoFixturesBundle\Services\FixtureCreator
+    arguments:
+      ['%fixtures.language%']

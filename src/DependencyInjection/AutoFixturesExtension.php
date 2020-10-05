@@ -28,10 +28,10 @@ class AutoFixturesExtension extends  Extension
 
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration,$configs);
-        $container->setParameter('fixtures.min_number',$config['min_number']);
-        $container->setParameter('fixtures.max_number',$config['max_number']);
-        $container->setParameter('fixtures.text',$config['text']);
-        $container->setParameter('fixtures.title',$config['title']);
+        $container->setParameter('fixtures.number_per_entity',$config['number_per_entity']);
+        $container->setParameter('fixtures.number_word_text',$config['number_word_text']);
+        $container->setParameter('fixtures.number_word_title',$config['number_word_title']);
+        $container->setParameter('fixtures.language',$config['language']);
     }
 
 }

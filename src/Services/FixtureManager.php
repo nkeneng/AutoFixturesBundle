@@ -1,15 +1,13 @@
 <?php
 
-
 namespace Steven\AutoFixturesBundle\Services;
-
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\Annotation;
 use Doctrine\ORM\Mapping\ManyToMany;
 use Doctrine\ORM\Mapping\ManyToOne;
-use Doctrine\ORM\Mapping\OneToMany;
 use Doctrine\ORM\Mapping\OneToOne;
+use ReflectionException;
 use Steven\AutoFixturesBundle\Annotations\FixturableFields;
 use Steven\AutoFixturesBundle\Annotations\FixturesAnnotationReader;
 use Symfony\Component\PropertyAccess\PropertyAccess;
@@ -34,19 +32,19 @@ class FixtureManager
     /**
      * @var int
      */
-    private $max_page;
+    private $number_per_entity;
     /**
      * @var int
      */
-    private $min_page;
+    private $language;
     /**
      * @var int
      */
-    private $text;
+    private $number_word_text;
     /**
      * @var int
      */
-    private $title;
+    private $number_word_title;
     /**
      * @var EntityManagerInterface
      */
@@ -68,19 +66,19 @@ class FixtureManager
 
     public function __construct(FixturablesClasses $fixturablesClasses,
                                 FixturesAnnotationReader $reader,
-                                $max_page,
-                                $min_page,
-                                $text,
-                                $title,
+                                $number_per_entity,
+                                $number_word_text,
+                                $number_word_title,
+                                $language,
                                 EntityManagerInterface $manager,
                                 FixtureCreator $creator)
     {
         $this->fixturablesClasses = $fixturablesClasses;
         $this->reader = $reader;
-        $this->max_page = $max_page;
-        $this->min_page = $min_page;
-        $this->text = $text;
-        $this->title = $title;
+        $this->number_per_entity = $number_per_entity;
+        $this->language = $language;
+        $this->number_word_text = $number_word_text;
+        $this->number_word_title = $number_word_title;
         $this->manager = $manager;
 
         $this->setFixturablesEntities();
@@ -114,23 +112,58 @@ class FixtureManager
             } else {
                 $this->handleNoEntityType($class);
             }
-
         }
-        dump($this->entities);
-//        $this->manager->flush();
+//        dump($this->entities);
+        $this->manager->flush();
     }
 
     public function setFixture(FixturableFields $annotation): ?string
     {
         switch ($annotation->getType()) {
             case 'title':
-                return $this->creator->generateTitle($this->title !== 0 ?? 0);
+                return $this->creator->generateTitle($this->number_word_title);
                 break;
             case 'text':
-                return $this->creator->generateText($this->text);
+                return $this->creator->generateText($this->number_word_text);
                 break;
             case 'name':
                 return $this->creator->generateName();
+                break;
+            case 'firstname':
+                return $this->creator->generateFirstname();
+                break;
+            case 'phonenumber':
+                return $this->creator->generatePhone();
+                break;
+            case 'company':
+                return $this->creator->generateCompany();
+                break;
+            case 'email':
+                return $this->creator->generateEmail();
+                break;
+            case 'companyemail':
+                return $this->creator->generateCompanyemail();
+                break;
+            case 'username':
+                return $this->creator->generateUsername();
+                break;
+            case 'datetime':
+                return $this->creator->generateDatetime();
+                break;
+            case 'creditCardType':
+                return $this->creator->generateCreditcardtype();
+                break;
+            case 'creditCardNumber':
+                return $this->creator->generateCreditcardnumber();
+                break;
+            case 'creditCardExpirationDate':
+                return $this->creator->generateCreditcardexpirationdate();
+                break;
+            case 'slug':
+                return $this->creator->generateSlug();
+                break;
+            case 'url':
+                return $this->creator->generateUrl();
                 break;
             case 'city':
                 return $this->creator->generateCity();
@@ -154,7 +187,7 @@ class FixtureManager
         return null;
     }
 
-    public function getRelatedEntity($entity, $field)
+    public function getRelatedEntity($entity, $field, $i)
     {
         $reflection = new \ReflectionClass(get_class($entity));
         foreach ($reflection->getProperties() as $property) {
@@ -165,47 +198,28 @@ class FixtureManager
                 $target = $annotation->targetEntity;
                 $targetExist = false;
 
-                // test code
-                // to be remove after
-//               if ($target == "App\Entity\Post" ){
-//                   dump($this->entities);
-//                   dump($target);
-//
-//               }
                 // if the target entity already have instances
-
-//                if (array_key_exists($target, $this->entities)) {
-//                    $targetExist = true;
-//                }
+                if (array_key_exists($target, $this->entities) && count($this->entities[$target]) >= 5) {
+                    $targetExist = true;
+                }
 
                 switch ($type) {
                     case ManyToOne::class:
                         // create many entities and link them to one target
                         $this->manyToOne($entity, $target, $field, $targetExist);
                         break;
-                    case OneToMany::class:
-                        break;
                     case ManyToMany::class:
+                        $this->manyToMany($entity, $target, $field, $targetExist);
                         break;
                     case OneToOne::class:
+                        $targetExist = false;
+                        if (array_key_exists($target, $this->entities) && isset($this->entities[$target][$i])) {
+                            $targetExist = true;
+                        }
+                        $this->oneToOne($entity, $target, $field, $targetExist, $i);
                         break;
                 }
             }
-        }
-    }
-
-    /**
-     * build a relation between the target and
-     * the current entity
-     * @param $object
-     * @param $target
-     * @param $field
-     * @param $number
-     */
-    public function associateEntities($object, $target, $field, $number)
-    {
-        for ($i = 0; $i <= $number; $i++) {
-            $this->accessor->setValue($object, $field, $target);
         }
     }
 
@@ -229,7 +243,7 @@ class FixtureManager
     private function handleNoEntityType($entityClass)
     {
         // create many instances
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < $this->number_per_entity; $i++) {
 
             $newEntity = $this->createEntity($entityClass);
 
@@ -237,7 +251,6 @@ class FixtureManager
 
             foreach ($annotations as $field => $annotation) {
                 $value = $this->setFixture($annotation);
-
                 $this->accessor->setValue($newEntity, $field, $value);
             }
             $this->entities[$entityClass][] = $newEntity;
@@ -247,12 +260,12 @@ class FixtureManager
 
     private function handleEntityType($entityClass)
     {
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < $this->number_per_entity; $i++) {
             $entity = $this->createEntity($entityClass);
             $annotations = $this->reader->getFixturablesProperties($entity);
             foreach ($annotations as $field => $annotation) {
                 if ($annotation->getType() == 'entity') {
-                    $this->getRelatedEntity($entity, $field);
+                    $this->getRelatedEntity($entity, $field, $i);
                 } else {
                     $value = $this->setFixture($annotation);
                     $this->accessor->setValue($entity, $field, $value);
@@ -261,44 +274,75 @@ class FixtureManager
             $this->entities[$entityClass][] = $entity;
             $this->manager->persist($entity);
         }
-
     }
 
     private function manyToOne($entity, $targetClass, $field, $targetExist)
     {
-        $entityClass = get_class($entity);
         $target = null;
         if ($targetExist) {
-            $target = $this->entities[$targetClass][0];
+            $target = $this->GetRandomEntity($targetClass);
         } else {
             // create a new instance of target if not in array
-            $target = $this->createEntity($targetClass);
-            $annotations = $this->reader->getFixturablesProperties($target);
-            foreach ($annotations as $currentField => $annotation) {
-                $value = $this->setFixture($annotation);
-                $this->accessor->setValue($target, $currentField, $value);
-            }
-            $this->entities[$targetClass][] = $target;
+            $target = $this->createNewTarget($targetClass);
+        }
 
-            $this->manager->persist($target);
+        $this->accessor->setValue($entity, $field, $target);
+    }
+
+    private function oneToOne($entity, $targetClass, $field, bool $targetExist, int $i)
+    {
+        $target = null;
+        if ($targetExist) {
+            $target = $this->entities[$targetClass][$targetClass][$i];
+        } else {
+            // create a new instance of target if not in array
+            $target = $this->createNewTarget($targetClass);
+        }
+
+        $this->accessor->setValue($entity, $field, $target);
+    }
+
+    /**
+     * @param $targetClass
+     * @return mixed
+     */
+    private function GetRandomEntity($targetClass)
+    {
+        return $this->entities[$targetClass][array_rand($this->entities[$targetClass])];
+    }
+
+    /**
+     * @param $targetClass
+     * @return mixed
+     * @throws ReflectionException
+     */
+    private function createNewTarget($targetClass)
+    {
+        $target = $this->createEntity($targetClass);
+        $annotations = $this->reader->getFixturablesProperties($target);
+        foreach ($annotations as $currentField => $annotation) {
+            $value = $this->setFixture($annotation);
+            $this->accessor->setValue($target, $currentField, $value);
+        }
+        $this->entities[$targetClass][] = $target;
+
+        $this->manager->persist($target);
+        return $target;
+    }
+
+    private function manyToMany($entity, $targetClass, $field, bool $targetExist)
+    {
+        $target = null;
+        if ($targetExist) {
+            for ($i = 0; $i <= 3; $i++) {
+                $target[] = $this->GetRandomEntity($targetClass);
+            }
+        } else {
+            // create a new instance of target if not in array
+            for ($i = 0; $i <= 3; $i++) {
+                $target[] = $this->createNewTarget($targetClass);
+            }
         }
         $this->accessor->setValue($entity, $field, $target);
-
-//        for ($i = 0; $i < 6; $i++) {
-//            $newEntity = $this->createEntity($entityClass);
-//
-//            $annotations = $this->reader->getFixturablesProperties($newEntity);
-//
-//            foreach ($annotations as $currentField => $annotation) {
-//
-//                if ($currentField == $field) {
-//                } else {
-//                    $value = $this->setFixture($annotation);
-//                    $this->accessor->setValue($newEntity, $currentField, $value);
-//                }
-//            }
-//            $this->entities[$entityClass] = $newEntity;
-//            $this->manager->persist($newEntity);
-//        }
     }
 }

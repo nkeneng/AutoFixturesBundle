@@ -4,10 +4,12 @@
 namespace Steven\AutoFixturesBundle\Command;
 
 
+use Doctrine\ORM\EntityManagerInterface;
 use Faker\Factory;
 use Faker\ORM\Propel\Populator;
 use Steven\AutoFixturesBundle\Services\FixturablesClasses;
 use Steven\AutoFixturesBundle\Services\FixtureManager;
+use Steven\AutoFixturesBundle\Services\Purger;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -24,11 +26,16 @@ class CreateFixturesCommand extends Command
      * @var FixtureManager
      */
     private $fixtureManager;
+    /**
+     * @var EntityManagerInterface
+     */
+    private $em;
 
-    public function __construct(string $name = null, FixtureManager $fixtureManager)
+    public function __construct(string $name = null, FixtureManager $fixtureManager,EntityManagerInterface $em)
     {
         parent::__construct($name);
         $this->fixtureManager = $fixtureManager;
+        $this->em = $em;
     }
 
     /**
@@ -52,6 +59,9 @@ class CreateFixturesCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $purger = new Purger($this->em);
+        $purger->setPurgeMode( Purger::PURGE_MODE_DELETE);
+        $purger->purge();
         $this->fixtureManager->createEntities();
         $this->io->success('hello world');
         return 0;
