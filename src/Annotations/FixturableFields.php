@@ -28,7 +28,7 @@ class FixturableFields
         'datetime',
         'creditCardType',
         'creditCardNumber',
-        'creditCardExpirationDate',
+        'creditCardExpirationDateString',
         'slug',
         'url',
         'city',

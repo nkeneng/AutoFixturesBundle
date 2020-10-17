@@ -59,7 +59,7 @@ class FixtureCreator
 
     public function generateImageUrl()
     {
-        //@TODO get the width , heigth, category from user
+        //@TODO get the width , height, category from user
         return $this->faker->imageUrl(640, 480, 'cats', true, 'Faker');
     }
 
@@ -108,9 +108,9 @@ class FixtureCreator
         return $this->faker->creditCardNumber;
     }
 
-    public function generateCreditcardexpirationdate()
+    public function generateCreditCardExpirationDateString()
     {
-        return $this->faker->creditCardExpirationDate;
+        return $this->faker->creditCardExpirationDateString;
     }
 
     public function generateSlug()

@@ -156,8 +156,8 @@ class FixtureManager
             case 'creditCardNumber':
                 return $this->creator->generateCreditcardnumber();
                 break;
-            case 'creditCardExpirationDate':
-                return $this->creator->generateCreditcardexpirationdate();
+            case 'creditCardExpirationDateString':
+                return $this->creator->generateCreditCardExpirationDateString();
                 break;
             case 'slug':
                 return $this->creator->generateSlug();
@@ -199,7 +199,7 @@ class FixtureManager
                 $targetExist = false;
 
                 // if the target entity already have instances
-                if (array_key_exists($target, $this->entities) && count($this->entities[$target]) >= 5) {
+                if (array_key_exists($target, $this->entities) && $i % 5 != 0) {
                     $targetExist = true;
                 }
 
@@ -261,24 +261,12 @@ class FixtureManager
     private function handleEntityType($entityClass)
     {
         for ($i = 0; $i < $this->number_per_entity; $i++) {
-            $entity = $this->createEntity($entityClass);
-            $annotations = $this->reader->getFixturablesProperties($entity);
-            foreach ($annotations as $field => $annotation) {
-                if ($annotation->getType() == 'entity') {
-                    $this->getRelatedEntity($entity, $field, $i);
-                } else {
-                    $value = $this->setFixture($annotation);
-                    $this->accessor->setValue($entity, $field, $value);
-                }
-            }
-            $this->entities[$entityClass][] = $entity;
-            $this->manager->persist($entity);
+            $this->createEntityType($entityClass, $i);
         }
     }
 
     private function manyToOne($entity, $targetClass, $field, $targetExist)
     {
-        $target = null;
         if ($targetExist) {
             $target = $this->GetRandomEntity($targetClass);
         } else {
@@ -291,7 +279,6 @@ class FixtureManager
 
     private function oneToOne($entity, $targetClass, $field, bool $targetExist, int $i)
     {
-        $target = null;
         if ($targetExist) {
             $target = $this->entities[$targetClass][$targetClass][$i];
         } else {
@@ -318,16 +305,8 @@ class FixtureManager
      */
     private function createNewTarget($targetClass)
     {
-        $target = $this->createEntity($targetClass);
-        $annotations = $this->reader->getFixturablesProperties($target);
-        foreach ($annotations as $currentField => $annotation) {
-            $value = $this->setFixture($annotation);
-            $this->accessor->setValue($target, $currentField, $value);
-        }
-        $this->entities[$targetClass][] = $target;
-
-        $this->manager->persist($target);
-        return $target;
+        $i = isset($this->entities[$targetClass]) ? count($this->entities[$targetClass]) : 0;
+        return $this->createEntityType($targetClass, $i);
     }
 
     private function manyToMany($entity, $targetClass, $field, bool $targetExist)
@@ -344,5 +323,28 @@ class FixtureManager
             }
         }
         $this->accessor->setValue($entity, $field, $target);
+    }
+
+    /**
+     * @param $entityClass
+     * @param int $i
+     * @return mixed
+     * @throws ReflectionException
+     */
+    private function createEntityType($entityClass, int $i)
+    {
+        $entity = $this->createEntity($entityClass);
+        $annotations = $this->reader->getFixturablesProperties($entity);
+        foreach ($annotations as $field => $annotation) {
+            if ($annotation->getType() == 'entity') {
+                $this->getRelatedEntity($entity, $field, $i);
+            } else {
+                $value = $this->setFixture($annotation);
+                $this->accessor->setValue($entity, $field, $value);
+            }
+        }
+        $this->entities[$entityClass][] = $entity;
+        $this->manager->persist($entity);
+        return $entity;
     }
 }
