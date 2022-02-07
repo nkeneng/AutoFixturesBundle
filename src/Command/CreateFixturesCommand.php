@@ -5,8 +5,6 @@ namespace Steven\AutoFixturesBundle\Command;
 
 
 use Doctrine\ORM\EntityManagerInterface;
-use Faker\Factory;
-use Faker\ORM\Propel\Populator;
 use Steven\AutoFixturesBundle\Services\FixturablesClasses;
 use Steven\AutoFixturesBundle\Services\FixtureManager;
 use Steven\AutoFixturesBundle\Services\Purger;
@@ -63,7 +61,7 @@ class CreateFixturesCommand extends Command
         $purger->setPurgeMode( Purger::PURGE_MODE_DELETE);
         $purger->purge();
         $this->fixtureManager->createEntities();
-        $this->io->success('hello world');
+        $this->io->success('Fixtures loaded successfully');
         return 0;
     }
 }
